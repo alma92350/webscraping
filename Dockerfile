@@ -1,5 +1,5 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# Use the official Playwright image which includes Python and browsers
+FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
 
 # Set the working directory in the container
 WORKDIR /app

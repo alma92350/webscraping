@@ -1,5 +1,6 @@
 fastapi
 uvicorn
-requests
+playwright
+nest_asyncio
 beautifulsoup4
 lxml
