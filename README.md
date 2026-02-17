@@ -1,3 +1,13 @@
+---
+title: Web Scraper API
+emoji: 🕸️
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Web Scraping Service
 
 This is a simple web scraping service built with FastAPI and BeautifulSoup, designed to be deployed on Hugging Face Spaces using Docker.
