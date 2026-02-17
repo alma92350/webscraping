@@ -4,6 +4,7 @@ nest_asyncio.apply()
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
 from bs4 import BeautifulSoup, Comment
 import re
 import asyncio
@@ -65,14 +66,10 @@ async def scrape_with_playwright(url: str):
             timezone_id="America/New_York"
         )
 
-        # Add init script to further hide webdriver property
-        await context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
-        """)
-
         page = await context.new_page()
+
+        # Apply stealth to the page
+        await stealth_async(page)
 
         try:
             # Go to URL and wait for network to be idle (load complete)
