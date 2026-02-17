@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 playwright
-playwright-stealth
+playwright-stealth==1.0.6
 nest_asyncio
 beautifulsoup4
 lxml
