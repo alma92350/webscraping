@@ -14,16 +14,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create a non-root user with an arbitrary UID (1000 is standard)
-RUN useradd -m -u 1000 user
+# The Playwright image likely already has a user 1000 (pwuser)
+# We will use that user instead of creating a new one to avoid conflicts
 
-# Set ownership of the working directory to the user
-RUN chown -R user:user /app
+# Set ownership of the working directory to the user 1000
+RUN chown -R 1000:1000 /app
 
-USER user
+USER 1000
 
 # Set environment variables
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# Set HOME to /app to avoid guessing the user's home directory name
+ENV HOME=/app \
+    PATH=/app/.local/bin:$PATH
 
 # Expose the port that the application listens on
 EXPOSE 7860
