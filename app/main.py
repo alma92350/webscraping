@@ -22,6 +22,23 @@ class ScrapeRequest(BaseModel):
     url: HttpUrl
 
 
+def get_client_ip(request: Request) -> str:
+    """Identify the caller for rate limiting.
+
+    Prefers X-Forwarded-For's left-most (original client) entry over
+    request.client.host. The app is only reachable through a platform
+    reverse proxy (e.g. Hugging Face Spaces' gateway) which sets this
+    header on every request and is the only path to the container - so it
+    can be trusted here. request.client.host would instead reflect that
+    proxy's own connecting address, not the real caller, which silently
+    breaks per-client rate limiting.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 def create_app(
     settings: Optional[Settings] = None,
     browser_manager: Optional[BrowserManager] = None,
@@ -75,7 +92,7 @@ def create_app(
         return {"status": "ok", "browser_ready": browser_manager.get_browser() is not None}
 
     async def process_scrape(url: str, request: Request) -> dict:
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
 
         try:
             if not rate_limiter.allow(client_ip):
