@@ -1,0 +1,47 @@
+name: CI and deploy to Hugging Face
+
+on:
+  push:
+    branches:
+      - claude/huggingface-to-github-clone-w43kj2
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run pytest
+        run: pytest -v
+
+  deploy:
+    name: Push to Hugging Face Space
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to the Space's main branch
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is not set. Add a Hugging Face write token as a repository secret named HF_TOKEN to enable automatic deploys."
+            exit 1
+          fi
+          git push "https://Almaatla:${HF_TOKEN}@huggingface.co/spaces/Almaatla/web-scraper" "HEAD:main"

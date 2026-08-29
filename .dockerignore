@@ -1,4 +1,5 @@
 .git
+.github
 .gitignore
 .gitattributes
 README.md
@@ -7,3 +8,7 @@ __pycache__
 *.pyc
 .venv
 venv
+tests
+pytest.ini
+requirements-dev.txt
+.pytest_cache
