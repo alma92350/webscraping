@@ -158,6 +158,36 @@ def test_rate_limit_blocks_after_the_configured_number_of_requests():
     assert r3.status_code == 429
 
 
+def test_rate_limit_keys_on_x_forwarded_for_not_the_proxy_peer():
+    # The app is only reachable through Hugging Face's reverse proxy, so
+    # request.client.host is always the proxy's own connecting address, not
+    # the real caller. Without honoring X-Forwarded-For, every caller would
+    # share (or fragment across) the wrong bucket and the limit would never
+    # engage correctly - this reproduces that against a fixed TestClient
+    # peer address, where two distinct forwarded IPs must be tracked
+    # independently and a repeated one must accumulate hits.
+    settings = base_settings(rate_limit_requests=2, rate_limit_window_seconds=60, cache_ttl_seconds=0)
+    with make_client(settings=settings) as client:
+        a1 = client.get(
+            "/scrape", params={"url": "https://example.com/a1"}, headers={"X-Forwarded-For": "1.2.3.4"}
+        )
+        a2 = client.get(
+            "/scrape", params={"url": "https://example.com/a2"}, headers={"X-Forwarded-For": "1.2.3.4"}
+        )
+        a3 = client.get(
+            "/scrape", params={"url": "https://example.com/a3"}, headers={"X-Forwarded-For": "1.2.3.4"}
+        )
+        # A different forwarded client is not affected by 1.2.3.4's limit.
+        b1 = client.get(
+            "/scrape", params={"url": "https://example.com/b1"}, headers={"X-Forwarded-For": "5.6.7.8"}
+        )
+
+    assert a1.status_code == 200
+    assert a2.status_code == 200
+    assert a3.status_code == 429
+    assert b1.status_code == 200
+
+
 def test_api_key_required_when_configured():
     settings = base_settings(api_key="secret123")
     with make_client(settings=settings) as client:
